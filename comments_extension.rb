@@ -21,7 +21,6 @@ class CommentsExtension < Radiant::Extension
   end
   
   def activate
-    return if Radiant.bootstraping?
     Page.send :include, CommentTags
     Comment
     
@@ -45,14 +44,18 @@ class CommentsExtension < Radiant::Extension
     
     admin.tabs.add "Comments", "/admin/comments/unapproved", :visibility => [:all]
 
-    { 'notification' => 'false',
-      'notification_from' => '',
-      'notification_to' => '',
-      'notification_site_name' => '',
-      'akismet_key' => '',
-      'akismet_url' => '',
-      'filters_enabled' => 'true',
-    }.each{|k,v| Radiant::Config.create(:key => "comments.#{k}", :value => v) unless Radiant::Config["comments.#{k}"]}
+    begin 
+      { 'notification' => 'false',
+        'notification_from' => '',
+        'notification_to' => '',
+        'notification_site_name' => '',
+        'akismet_key' => '',
+        'akismet_url' => '',
+        'filters_enabled' => 'true',
+      }.each{|k,v| Radiant::Config.create(:key => "comments.#{k}", :value => v) unless Radiant::Config["comments.#{k}"]}
+    rescue Exception => e
+      puts e
+    end
     
     require "fastercsv"
     
