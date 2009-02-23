@@ -21,6 +21,7 @@ class CommentsExtension < Radiant::Extension
   end
   
   def activate
+    return if Radiant.bootstraping?
     Page.send :include, CommentTags
     Comment
     
