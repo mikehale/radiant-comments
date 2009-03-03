@@ -1,4 +1,4 @@
-<% if current_user.admin? || current_user.publisher? %>
+<% if current_user.admin? %>
 <p style="clear:left">
   <label for="page_enable_comments">Allow Comments on this page?</label> 
   <%= check_box "page", "enable_comments" %>

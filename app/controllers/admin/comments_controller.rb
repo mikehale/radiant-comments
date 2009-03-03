@@ -1,5 +1,8 @@
 class Admin::CommentsController < ApplicationController
-  
+  only_allow_access_to :edit, :update, :enable, :approve, :unapprove, :destroy,
+    :when => [:developer, :admin],
+    :denied_message => "You must have admin or developer privileges to execute this action."
+
   def index
     conditions = case params[:status]
     when "approved"
