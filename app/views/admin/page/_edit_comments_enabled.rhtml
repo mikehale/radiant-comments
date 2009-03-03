@@ -1,3 +1,4 @@
+<% if current_user.admin? || current_user.publisher? %>
 <p style="clear:left">
   <label for="page_enable_comments">Allow Comments on this page?</label> 
   <%= check_box "page", "enable_comments" %>
@@ -6,3 +7,4 @@
     <%= link_to "Currently #{@page.comments_count} &mdash; View comments", admin_page_comments_path(:page_id => @page.id) unless @page.new_record? or @page.comments_count < 1 %>
   </small>
 </p>
+<% end %>
