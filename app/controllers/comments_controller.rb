@@ -23,12 +23,16 @@ class CommentsController < ApplicationController
   rescue ActiveRecord::RecordInvalid
     @page.last_comment = comment
     render :text => @page.render
+ # rescue Comments::MollomUnsure
+    #flash, en render :text => @page.render
   end
   
   private
   
     def find_page
-      @page = Page.find_by_url(params[:url].join("/"))
+      url = params[:url]
+      url.shift if defined?(SiteLanguage) && SiteLanguage.count > 1
+      @page = Page.find_by_url(url.join("/"))
     end
     
     def set_host

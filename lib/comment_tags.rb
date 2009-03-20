@@ -11,6 +11,13 @@ module CommentTags
   end
   
   desc %{
+    Renders the contained elements unless comments are enabled on the page. 
+  }
+  tag "unless_enable_comments" do |tag|
+    tag.expand unless (tag.locals.page.enable_comments?)
+  end
+  
+  desc %{
     Renders the contained elements if the page has comments. 
   }
   tag "if_comments" do |tag|
@@ -59,7 +66,9 @@ module CommentTags
     tag "comments:field:#{field}" do |tag|
       options = tag.attr.dup
       #options.inspect
-      tag.locals.comment.send(field)
+      value = tag.locals.comment.send(field)
+      return value[7..-1] if field == 'author_url' && value[0,7]=='http://'
+      value
     end
   end
   
@@ -83,7 +92,7 @@ module CommentTags
     if tag.locals.comment.author_url.blank?
       tag.locals.comment.author
     else
-      %(<a href="#{tag.locals.comment.author_url}">#{tag.locals.comment.author}</a>)
+      %(<a href="http://#{tag.locals.comment.author_url}">#{tag.locals.comment.author}</a>)
     end
   end
   

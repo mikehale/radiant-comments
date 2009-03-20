@@ -4,6 +4,9 @@ class Comment < ActiveRecord::Base
   
   before_save :auto_approve
   before_save :apply_filter
+  after_save  :save_mollom_servers
+    
+  MOLLOM_SERVER_CACHE = RAILS_ROOT + '/tmp/mollom_servers.yaml'
     
   def self.per_page
     50
@@ -17,6 +20,24 @@ class Comment < ActiveRecord::Base
   
   def akismet
     @akismet ||= Akismet.new(Radiant::Config['comments.akismet_key'], Radiant::Config['comments.akismet_url'])
+  end
+  
+  def save_mollom_servers
+    if mollom.key_ok?
+      File.open(MOLLOM_SERVER_CACHE,'w') do |f|
+        f.write mollom.server_list.to_yaml
+      end
+    end
+  rescue Mollom::Error
+  end
+  
+  def mollom
+    return @mollom if @mollom
+    @mollom ||= Mollom.new(:private_key => Radiant::Config['comments.mollom_privatekey'], :public_key => Radiant::Config['comments.mollom_publickey'])
+    if (File.exists?(MOLLOM_SERVER_CACHE))
+      @mollom.server_list = YAML::load(File.read(MOLLOM_SERVER_CACHE))
+    end    
+    @mollom
   end
   
   # If the Akismet details are valid, and Akismet thinks this is a non-spam
@@ -36,9 +57,21 @@ class Comment < ActiveRecord::Base
         self.content,              # comment text
         {}                         # other
       )
+      elsif mollom.key_ok?
+        response = mollom.check_content(
+          :author_name => self.author,            # author name     
+          :author_mail => self.author_email,         # author email
+          :author_url => self.author_url,           # author url
+          :post_body => self.content              # comment text
+          )
+          ham = response.ham?
+          self.mollom_id = response.session_id
+       response.ham?  
     else
       false
     end
+  rescue Mollom::Error
+    return false
   end
   
   def unapproved?
@@ -55,6 +88,20 @@ class Comment < ActiveRecord::Base
   
   def unapprove!
     self.update_attribute(:approved_at, nil)
+    # if we have to unapprove, and use mollom, it means
+    # the initial check was false. Submit this to mollom as Spam.
+    # Ideally, we'd need a different feedback for
+    #  - spam
+    #  - profanity
+    #  - unwanted
+    #  - low-quality
+     begin
+     if mollom.key_ok? and !self.mollom_id.empty?
+        mollom.send_feedback :session_id => self.mollom_id, :feedback => 'spam'
+      end
+    rescue Mollom::Error => e
+      raise Comment::AntispamWarning.new(e.to_s)
+    end
   end
   
   private
@@ -88,4 +135,6 @@ class Comment < ActiveRecord::Base
       simple_format(h(content))
     end
   end
+  
+  class AntispamWarning < StandardError; end
 end
