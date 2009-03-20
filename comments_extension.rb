@@ -57,6 +57,7 @@ class CommentsExtension < Radiant::Extension
         'mollom_privatekey' => '',
         'mollom_publickey' => '',
         'filters_enabled' => 'true',
+        'auto_approve' => 'true'
       }.each{|k,v| Radiant::Config.create(:key => "comments.#{k}", :value => v) unless Radiant::Config["comments.#{k}"]}
     rescue Exception => e
       puts e

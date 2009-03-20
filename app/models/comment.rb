@@ -45,7 +45,7 @@ class Comment < ActiveRecord::Base
   def auto_approve?
     if akismet.valid?
       # We do the negation because true means spam, false means ham
-      !akismet.commentCheck(
+      result = !akismet.commentCheck(
         self.author_ip,            # remote IP
         self.user_agent,           # user agent
         self.referrer,             # http referer
@@ -57,6 +57,8 @@ class Comment < ActiveRecord::Base
         self.content,              # comment text
         {}                         # other
       )
+      RAILS_DEFAULT_LOGGER.debug("Comments: Auto-approving comment with akismet.")
+      result
       elsif mollom.key_ok?
         response = mollom.check_content(
           :author_name => self.author,            # author name     
@@ -66,11 +68,13 @@ class Comment < ActiveRecord::Base
           )
           ham = response.ham?
           self.mollom_id = response.session_id
-       response.ham?  
+       RAILS_DEFAULT_LOGGER.debug("Comments: Auto-approving comment with mollom.")
+       response.ham?
     else
       false
     end
   rescue Mollom::Error
+    RAILS_DEFAULT_LOGGER.debug("Comments: Not auto-approving because a valid service is not configured.")
     return false
   end
   
@@ -107,7 +111,7 @@ class Comment < ActiveRecord::Base
   private
   
     def auto_approve
-      self.approved_at = Time.now if auto_approve?
+      self.approved_at = Time.now if Radiant::Config['comments.auto_approve'] == "true" && auto_approve?
     end
     
     def apply_filter
