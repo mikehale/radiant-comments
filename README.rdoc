@@ -11,6 +11,7 @@ This software "works for me", but it may not work for you, depending on your par
 * Requires Radiant 0.6.7 or greater.
 * Requires will_paginate Rails plugin (http://github.com/mislav/will_paginate/tree/master)
 * Requires fastercsv 1.2.3 or greater.
+* Requires mikehale-akismet 0.0.3 or greater.
 
 == Installation 
 
