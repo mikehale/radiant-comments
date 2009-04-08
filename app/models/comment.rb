@@ -32,7 +32,7 @@ class Comment < ActiveRecord::Base
   end
   
   def auto_approve
-    if Radiant::Config['comments.auto_approve'] == "true" && akismet.verify?
+    if Radiant::Config['comments.auto_approve'] == "true"
       if ham?
         self.approved_at = Time.now
         RAILS_DEFAULT_LOGGER.debug("Comments: auto-approving comment (ham).")
