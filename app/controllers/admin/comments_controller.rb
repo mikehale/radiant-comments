@@ -8,7 +8,9 @@ class Admin::CommentsController < ApplicationController
     when "approved"
       "comments.approved_at IS NOT NULL"
     when "unapproved"
-      "comments.approved_at IS NULL"
+      {:approved_at => nil, :spam => false}
+    when "spam"
+      {:spam => true}
     else
       nil
     end
@@ -34,10 +36,19 @@ class Admin::CommentsController < ApplicationController
   end
   
   def destroy_unapproved
-    if Comment.destroy_all('approved_at is NULL')
-      flash[:notice] = "You have removed all unapproved comments."
+    flash[:notice] = if Comment.destroy_unapproved
+      "You have removed all unapproved comments."
     else
-      flash[:notice] = "I was unable to remove all unapproved comments."
+      "I was unable to remove all unapproved comments."
+    end
+    redirect_to :back
+  end
+
+  def destroy_spam
+    flash[:notice] = if Comment.destroy_spam
+      "You have removed all spam comments."
+    else
+      "I was unable to remove all spam comments."
     end
     redirect_to :back
   end
@@ -93,6 +104,13 @@ class Admin::CommentsController < ApplicationController
     redirect_to :back
   end
 
+  def is_spam
+    @comment = Comment.find(params[:id])
+    @comment.unapprove!
+    ResponseCache.instance.expire_response(@comment.page.url)
+    flash[:notice] = "Comment was successfully marked as spam."
+    redirect_to :back
+  end
 
   protected
 

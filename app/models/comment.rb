@@ -4,6 +4,7 @@ class Comment < ActiveRecord::Base
   belongs_to :page, :counter_cache => true
   validates_presence_of :author, :author_email, :content
   
+  before_save :auto_classify
   before_save :auto_approve
   before_save :apply_filter
     
@@ -21,15 +22,30 @@ class Comment < ActiveRecord::Base
     @akismet ||= Akismet.new(Radiant::Config['comments.akismet_key'], Radiant::Config['comments.akismet_url'])
   end
   
+  def auto_classify
+    if new_record? && akismet.verify?
+      self.spam = akismet.spam?(akismet_attributes)
+      RAILS_DEFAULT_LOGGER.debug("Comments: comment(#{id}) classified as #{spam? ? 'spam' : 'ham'}.")
+    end
+  rescue Akismet::VerifyException => e
+    RAILS_DEFAULT_LOGGER.debug("Comments: #{e.message}")
+  end
+  
   def auto_approve
     if Radiant::Config['comments.auto_approve'] == "true" && akismet.verify?
-      result = akismet.ham?(akismet_attributes)
-      if result
+      if ham?
         self.approved_at = Time.now
-        RAILS_DEFAULT_LOGGER.debug("Comments: Auto-approving comment with akismet.")
+        RAILS_DEFAULT_LOGGER.debug("Comments: auto-approving comment (ham).")
+      else
+        RAILS_DEFAULT_LOGGER.debug("Comments: not auto-approving comment (spam).")
       end
-      result
+    else
+      RAILS_DEFAULT_LOGGER.debug("Comments: auto approve disabled.")
     end
+  end
+  
+  def ham?
+    !spam?
   end
 
   def unapproved?
@@ -40,14 +56,30 @@ class Comment < ActiveRecord::Base
     !approved_at.nil?
   end
   
+  def self.destroy_unapproved
+    destroy_all(:approved_at => nil)
+  end
+  
+  def self.destroy_spam
+    destroy_all(:spam => true)
+  end
+  
   def approve!
-    self.update_attribute(:approved_at, Time.now)
-    akismet.submit_ham(akismet_attributes)
+    was_spam = spam?
+    self.update_attributes(:approved_at => Time.now, :spam => false)
+    if was_spam
+      akismet.submit_ham(akismet_attributes)
+      RAILS_DEFAULT_LOGGER.debug("Comments: submitting ham.")
+    end
   end
 
   def unapprove!
-    self.update_attribute(:approved_at, nil)
-    akismet.submit_spam(akismet_attributes)
+    was_ham = ham?
+    self.update_attributes(:approved_at => nil, :spam => true)
+    if was_ham
+      akismet.submit_spam(akismet_attributes)
+      RAILS_DEFAULT_LOGGER.debug("Comments: submitting spam.")
+    end
   end
   
   private

@@ -8,12 +8,14 @@ class CommentsExtension < Radiant::Extension
   define_routes do |map|                
     map.with_options(:controller => 'admin/comments') do |comments| 
       comments.destroy_unapproved_comments '/admin/comments/unapproved/destroy', :action => 'destroy_unapproved', :conditions => {:method => :delete}
-      comments.connect 'admin/comments/:status', :status => /all|approved|unapproved/, :conditions => { :method => :get }
+      comments.destroy_spam_comments '/admin/comments/spam/destroy', :action => 'destroy_spam', :conditions => {:method => :delete}
+      comments.connect 'admin/comments/:status', :status => /all|approved|unapproved|spam/, :conditions => { :method => :get }
       comments.connect 'admin/comments/:status.:format'
       comments.connect 'admin/pages/:page_id/comments/:status.:format'
       comments.connect 'admin/pages/:page_id/comments/all.:format'
       
-      comments.resources :comments, :path_prefix => "/admin", :name_prefix => "admin_", :member => {:approve => :get, :unapprove => :get}
+      comments.resources :comments, :path_prefix => "/admin", :name_prefix => "admin_", 
+        :member => {:approve => :get, :unapprove => :get, :is_spam => :get}
       comments.admin_page_comments 'admin/pages/:page_id/comments/:action'
       comments.admin_page_comment 'admin/pages/:page_id/comments/:id/:action'
     end

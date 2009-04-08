@@ -15,6 +15,7 @@
   <%= content_tag :span, link_to_unless_current("All Comments", :status => "all", :page_id => params[:page_id]) %> 
   <%= content_tag :span, link_to_unless_current("Approved Comments", :status => "approved", :page_id => params[:page_id]) %> 
   <%= content_tag :span, link_to_unless_current("Unapproved Comments", :status => "unapproved", :page_id => params[:page_id]) %>
+  <%= content_tag :span, link_to_unless_current("Spam Comments", :status => "spam", :page_id => params[:page_id]) %>
 </p>
 
 <table id="comments" class="index" border="0" cellspacing="0" cellpadding="0">
@@ -24,6 +25,7 @@
 </table>
 
 <p><%= link_to "Delete All Unapproved", destroy_unapproved_comments_url, :method => :delete %></p>
+<p><%= link_to "Delete All Spam", destroy_spam_comments_url, :method => :delete %></p>
 
 <%= will_paginate @comments %>
 

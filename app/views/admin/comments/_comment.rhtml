@@ -21,6 +21,11 @@
     <div>
       <%= link_to "remove", admin_comment_path(comment), :method => :delete, :confirm => "Are you sure?" %>
     </div>
+    <% if comment.ham? %>
+    <div>
+      <%= link_to "spam", is_spam_admin_comment_path(comment) %>
+    </div>
+    <% end %>
     <div>
       <%= link_to "edit", edit_admin_comment_path(comment) %>
     </div>
