@@ -7,6 +7,7 @@ class CommentsController < ApplicationController
 
   def index
     @page.selected_comment = @page.comments.find_by_id(flash[:selected_comment])
+    @page.request, @page.response = request, response
     render :text => @page.render
   end
   
@@ -22,6 +23,7 @@ class CommentsController < ApplicationController
     redirect_to "#{@page.url}comments#comment-#{comment.id}"
   rescue ActiveRecord::RecordInvalid
     @page.last_comment = comment
+    @page.request, @page.response = request, response
     render :text => @page.render
  # rescue Comments::MollomUnsure
     #flash, en render :text => @page.render
