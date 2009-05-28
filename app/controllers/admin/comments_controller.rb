@@ -32,7 +32,7 @@ class Admin::CommentsController < ApplicationController
     @comment.destroy
     announce_comment_removed
     ResponseCache.instance.expire_response(@comment.page.url)
-    redirect_to :back
+    redirect_to_back
   end
   
   def destroy_unapproved
@@ -41,7 +41,7 @@ class Admin::CommentsController < ApplicationController
     else
       "I was unable to remove all unapproved comments."
     end
-    redirect_to :back
+    redirect_to_back
   end
 
   def destroy_spam
@@ -50,7 +50,7 @@ class Admin::CommentsController < ApplicationController
     else
       "I was unable to remove all spam comments."
     end
-    redirect_to :back
+    redirect_to_back
   end
 
   def edit
@@ -89,7 +89,13 @@ class Admin::CommentsController < ApplicationController
     end
     ResponseCache.instance.expire_response(@comment.page.url)
     flash[:notice] = "Comment was successfully approved on page #{@comment.page.title}" + (antispamnotice ? " (#{antispamnotice})" : "")
+    redirect_to_back
+  end
+  
+  def redirect_to_back
     redirect_to :back
+  rescue ActionController::RedirectBackError
+    redirect_to :action => :index
   end
 
   def unapprove
@@ -101,7 +107,7 @@ class Admin::CommentsController < ApplicationController
     end
     ResponseCache.instance.expire_response(@comment.page.url)
     flash[:notice] = "Comment was successfully unapproved on page #{@comment.page.title}" + (antispamnotice ? " (#{antispamnotice})" : "" )
-    redirect_to :back
+    redirect_to_back
   end
 
   def is_spam
@@ -109,7 +115,7 @@ class Admin::CommentsController < ApplicationController
     @comment.unapprove!
     ResponseCache.instance.expire_response(@comment.page.url)
     flash[:notice] = "Comment was successfully marked as spam."
-    redirect_to :back
+    redirect_to_back
   end
 
   protected
