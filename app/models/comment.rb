@@ -27,7 +27,7 @@ class Comment < ActiveRecord::Base
       self.spam = akismet.spam?(akismet_attributes)
       RAILS_DEFAULT_LOGGER.debug("Comments: comment(#{id}) classified as #{spam? ? 'spam' : 'ham'}.")
     end
-  rescue Akismet::VerifyException => e
+  rescue Akismet::VerifyError => e
     RAILS_DEFAULT_LOGGER.debug("Comments: #{e.message}")
   end
   
