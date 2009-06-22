@@ -6,7 +6,9 @@ class CommentMailer < ActionMailer::Base
     
     receivers = []
     receivers << notification_to_config unless notification_to_config.blank?
-    receivers << comment.page.created_by.email unless notify_creator_config == false
+    unless notify_creator_config == false
+      receivers << comment.page.created_by.email if comment.page.created_by
+    end
     if notify_updater_config == true && comment.page.updated_by != comment.page.created_by
       receivers << comment.page.updated_by.email
     end
