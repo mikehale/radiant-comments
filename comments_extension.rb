@@ -1,4 +1,4 @@
-require_dependency 'application'
+require_dependency 'application_controller'
 
 class CommentsExtension < Radiant::Extension
   version "0.0.5"
